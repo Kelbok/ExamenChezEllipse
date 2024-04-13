@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Carte des stations</title>
+    <!-- Inclure Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <!-- Inclure Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        #map {
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    // Créer une carte Leaflet centrée sur une position spécifique
+    var map = L.map('map').setView([48.8566, 2.3522], 12);
+
+    // Ajouter une couche de tuiles OpenStreetMap à la carte
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Données de station (exemple)
+    var stations = [
+        {name: 'Station 1', location: [48.8566, 2.3522], description: 'Description de la station 1'},
+        {name: 'Station 2', location: [48.8584, 2.2945], description: 'Description de la station 2'},
+        {name: 'Station 3', location: [48.8647, 2.3789], description: 'Description de la station 3'}
+    ];
+
+    // Parcourir les données de la station et ajouter des marqueurs à la carte
+    stations.forEach(function (station) {
+        L.marker(station.location).addTo(map)
+            .bindPopup('<b>' + station.name + '</b><br/>' + station.description);
+    });
+</script>
+<script>
+    // Fonction pour mettre à jour les informations sur la carte
+    function updateMap() {
+    const apiKey = "e0a1bf2c844edb9084efc764c089dd748676cc14"; 
+
+    fetch(`https://api.jcdecaux.com/vls/v3/stations?apiKey=${apiKey}`)
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(station => {
+                let existingMarker = markers.find(marker => marker.options.title === station.name);
+                if (existingMarker) {
+                    existingMarker.setPopupContent(`<b>${station.name}</b><br>Nombre de vélos disponibles : ${station.mainStands.availabilities.bikes}`);
+                } else {
+                    L.marker([station.position.latitude, station.position.longitude])
+                        .addTo(map)
+                        .bindPopup(`<b>${station.name}</b><br>Nombre de vélos disponibles : ${station.mainStands.availabilities.bikes}`);
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Erreur lors de la récupération des données :', error);
+        });
+}
+setInterval(updateMap, 60000);
+</script>
+</body>
+</html>
